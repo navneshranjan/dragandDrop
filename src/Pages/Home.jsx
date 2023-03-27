@@ -1,116 +1,212 @@
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Checkbox,
+  Grid,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+  Dialog,
+} from "@mui/material";
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import { Autocomplete, IconButton, Stack, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
 import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
-import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import { DataGrid } from "@mui/x-data-grid";
+import { headers } from "./constant";
 
 const Home = () => {
+  const [openModal, setOpenModal] = useState(false);
   const [productList, setProductList] = useState([]);
-  const rowsValues = [
+  const [inputFields, setInputFields] = useState([
     {
-      internalId: Math.round(Math.random() * 10),
-      lastName: "Snow",
-      firstName: "Jon",
-      age: 35,
+      id: "",
+      row_status: false,
+      item_name: "",
+      description: "",
+      price: "",
     },
-  ];
-  const [rows, setRows] = useState(rowsValues);
+  ]);
+
+  const handleAddFields = () => {
+    setInputFields([
+      ...inputFields,
+      { id: "", row_status: false, item_name: "", description: "", price: "" },
+    ]);
+  };
   useEffect(() => {
     axios
       .get(`https://dummyjson.com/products`)
       .then((response) => {
         console.log("response:response ", response.data);
-        setProductList(response.data.products);
+        const data = response.data.products.map((item) => {
+          return item.brand;
+        });
+        setProductList(data);
       })
       .catch((error) => {
         console.log("response:error ", error);
       });
   }, []);
-  const deleteUser = useCallback(
-    (id) => () => {
-      setTimeout(() => {
-        setRows((prevRows) => {
-          console.log("skjfshfsn", { prevRows, id });
-          return prevRows.filter((row) => row.internalId !== id);
-        });
-      });
-    },
-    []
-  );
-  const addUser = useCallback(
-    (id) => () => {
-      setTimeout(() => {
-        setRows((prevRows) => console.log({ prevRows, rowsValues }));
-      });
-    },
-    []
-  );
-  const columns = useMemo(
-    () => [
-      {
-        field: "item",
-        headerName: "Item",
-        flex: 1,
-        editable: true,
-        type: "singleSelect",
-        valueOptions: productList,
-        getOptionValue: (value) => value.brand,
-        getOptionLabel: (value) => value.brand,
-      },
-      {
-        field: "decription",
-        headerName: "Decription",
-        flex: 1,
-        renderCell: () => {
-          return <TextField size="small" />;
-        },
-      },
-      {
-        field: "price",
-        headerName: "Price",
-        flex: 1,
-        renderCell: () => {
-          return <TextField size="small" />;
-        },
-      },
-      {
-        field: "action",
-        type: "actions",
-        flex: 1,
-        getActions: (params) => [
-          <GridActionsCellItem
-            icon={<AddBoxOutlinedIcon />}
-            label="Add"
-            onClick={addUser(params.id)}
-          />,
-          <GridActionsCellItem
-            icon={<DeleteOutlineOutlinedIcon />}
-            label="Delete"
-            onClick={deleteUser(params.id)}
-          />,
-        ],
-      },
-    ],
-    [deleteUser, productList]
-  );
+  console.log("input", inputFields);
+
+  const handleRemoveFields = (index) => {
+    const values = [...inputFields];
+    if (values.length !== 1) {
+      values.splice(index, 1);
+      setInputFields(values);
+    }
+  };
+  const values = [...inputFields];
+  console.log("val", values);
+
+  const handleStatusChange = (index, status) => {
+    console.log("status", index, status);
+    values[index]["row_status"] = status;
+    setInputFields(values);
+  };
+  const handleItemChange = (index, item) => {
+    console.log("data123", { index, item });
+    values[index]["item_name"] = item;
+    setInputFields(values);
+  };
+  const handelDescriptionChange = (index, description) => {
+    console.log(index, description);
+    values[index]["description"] = description;
+    setInputFields(values);
+  };
+  const handelPriceChange = (index, price) => {
+    console.log(index, price);
+    values[index]["price"] = price;
+    setInputFields(values);
+  };
+
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   return (
-    <DataGrid
-      rows={rows}
-      getRowId={(row) => {
-        console.log("check internal Id", row);
-        return <></>;
-      }}
-      autoHeight
-      columns={columns}
-      pageSize={5}
-      rowsPerPageOptions={[10, 20, 30]}
-      checkboxSelection
-      disableSelectionOnClick
-      disableRowSelectionOnClick
-      disableColumnSelector
-    />
+    <>
+      <Box border="1px solid #000">
+        <Grid container>
+          <Grid item xs={1} padding="0.3em" border="1px solid">
+            IsActive
+          </Grid>
+
+          <Grid item xs={3.17} padding="0.3em" border="1px solid">
+            Item
+          </Grid>
+
+          <Grid item xs={3.17} padding="0.3em" border="1px solid">
+            Description
+          </Grid>
+
+          <Grid item xs={3.16} padding="0.3em" border="1px solid">
+            Price
+          </Grid>
+          <Grid item xs={1.5} padding="0.3em" border="1px solid"></Grid>
+        </Grid>
+        {inputFields.map((inputField, index) => {
+          return (
+            <Grid container>
+              <Grid item xs={1} padding="0.3em" border="1px solid">
+                <Checkbox
+                  onChange={(e) => handleStatusChange(index, e.target.checked)}
+                />
+              </Grid>
+              <Grid item xs={3.16} padding="0.3em" border="1px solid">
+                <Autocomplete
+                  size="small"
+                  disablePortal
+                  id="combo-box-demo"
+                  // onChange={(e) => handleItemChange(index, e.target.value);console.log();}
+                  onChange={(e, data) => {
+                    console.log("check data", data);
+                    handleItemChange(index, data);
+                  }}
+                  options={productList}
+                  renderInput={(params) => <TextField {...params} />}
+                />
+              </Grid>
+              <Grid item xs={3.17} padding="0.3em" border="1px solid">
+                <TextField
+                  onChange={(e) =>
+                    handelDescriptionChange(index, e.target.value)
+                  }
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={3.17} padding="0.3em" border="1px solid">
+                <TextField
+                  size="small"
+                  onChange={(e) => handelPriceChange(index, e.target.value)}
+                  fullWidth
+                />
+              </Grid>
+
+              <Grid item xs={1.5} padding="0.3em" border="1px solid">
+                <Stack direction="row" spacing={1} justifyContent="center">
+                  <IconButton size="small" onClick={handleAddFields}>
+                    <AddBoxOutlinedIcon />
+                  </IconButton>
+
+                  <IconButton size="small" onClick={handleRemoveFields}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Stack>
+              </Grid>
+            </Grid>
+          );
+        })}
+        <Grid container>
+          <Grid item xs={1} padding="0.3em" border="1px solid">
+            <Typography alignSelf="center">Total</Typography>
+          </Grid>
+          <Grid item xs={3.16} padding="0.3em" border="1px solid"></Grid>
+          <Grid item xs={3.17} padding="0.3em" border="1px solid"></Grid>
+          <Grid item xs={3.17} padding="0.3em" border="1px solid">
+            <TextField size="small" fullWidth />
+          </Grid>
+          <Grid item xs={1.5}></Grid>
+        </Grid>
+      </Box>
+      <Stack alignItems="flex-end">
+        <Button
+          onClick={() => setOpenModal(true)}
+          sx={{ marginTop: "2em" }}
+          padding="2em"
+          variant="contained"
+        >
+          Save
+        </Button>
+      </Stack>
+      <Dialog open={openModal} onClose={handleClose}>
+        <DataGrid
+          rows={inputFields}
+          getRowId={(row) => row.id}
+          columns={headers}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 5,
+              },
+            },
+          }}
+          pageSizeOptions={[5]}
+          checkboxSelection
+          disableRowSelectionOnClick
+        />
+      </Dialog>
+    </>
   );
 };
 
